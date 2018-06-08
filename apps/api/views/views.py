@@ -235,7 +235,7 @@ class Modify_File(BaseHandler):
                 }
             return self.write_json(result)
         except BaseException:
-            return self.write_json({'errno':1,'msg':'内容无更改！！！'})
+            return self.write_json({'errno':1,'msg':'内容无更改'})
 
 
 class Commit_File(BaseHandler):
@@ -244,7 +244,7 @@ class Commit_File(BaseHandler):
     def post(self, request):
         merge_branch = request.POST.get('merge_branch')
         client = git_client.GitServer(self.repo)
-        logger.info("Commit Conflict File: %s %s %s %s %s" % (self.repo,self.branch,merge_branch))
+        logger.info("Commit Conflict File: %s %s %s" % (self.repo,self.branch,merge_branch))
         if '1' == request.POST.get('type'):
             client.cli.add('.')
             client.cli.commit(m='commit conflict file')
@@ -356,7 +356,7 @@ class File_Diff(BaseHandler):
             file_path = request.POST.get('file_path')
             assi_branch = request.POST.get('assi_branch')
 
-            logger.info("File_Diff: %s %s %s" % (self.repo, assi_branch, file_path))
+            logger.info("File_Diff: %s %s %s %s %s" % (self.repo, assi_branch, request.POST.get('type'), request.POST.get('role'), file_path))
             if '0' == request.POST.get('type'):
                 client = git_client.GitServer(self.repo)
                 client.cli.checkout(self.branch)
@@ -365,17 +365,18 @@ class File_Diff(BaseHandler):
                 return self.write_json({'errno': '0', 'msg': 'success','data':s})
 
             if '1' == request.POST.get('type'):
-                if '0' == request.POST.get('role'):
+                if settings.GIT_ROLE_MASTER_TYPE == request.POST.get('role'):
                     client = git_client.GitServer(self.repo)
                     client.cli.checkout(self.branch)
                     repo = git.Repo(self.repo)
-                    s = repo.git.log('-p',assi_branch,'^'+'master')
+                    s = repo.git.log('-p','^'+'master' ,assi_branch),
                     return self.write_json({'errno': '0', 'msg': 'success','data':s})
-                if '1' == request.POST.get('role'):
+                if settings.GIT_ROLE_BRANCH_TYPE == request.POST.get('role'):
+                    logger.debug("BRANCHE")
                     client = git_client.GitServer(self.repo)
                     client.cli.checkout(assi_branch)
                     repo = git.Repo(self.repo)
-                    s = repo.git.log('-p','master' ,'^'+assi_branch),
+                    s = repo.git.log('-p','^'+assi_branch,'master')
                     return self.write_json({'errno': '0', 'msg': 'success','data':s})
 
                 if '2' == request.POST.get('role'):

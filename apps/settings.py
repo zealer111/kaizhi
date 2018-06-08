@@ -207,3 +207,7 @@ LOGGING = {
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+
+#### ROLE OF GIT
+GIT_ROLE_MASTER_TYPE = '0'
+GIT_ROLE_BRANCH_TYPE = '1'
