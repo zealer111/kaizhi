@@ -1,0 +1,12 @@
+*.log
+__pycache__
+*.pyc
+*.json
+backup
+static
+run.sh
+dev.py
+*.sw*
+repos
+.git-kaizhi
+nohup.out
