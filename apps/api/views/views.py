@@ -167,7 +167,7 @@ class Rename_File(BaseHandler):
         else:
             if '0' == _type:
                 repo_path = os.path.join(self.repo,new_name)
-                os.rename(path,repo_path)
+                os.rename(path, repo_path)
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -178,12 +178,12 @@ class Rename_File(BaseHandler):
                 }
                 return self.write_json(result)
             elif '1' == _type:
-                repo_path = os.path.join(self.repo,new_name)
-                os.rename(path,repo_path)
                 client = git_client.GitServer(self.repo)
-                client.cli.add(repo_path)
-                client.cli.commit(m='rename %' % repo_path)
                 client.cli.checkout(self.branch)
+                repo_path = os.path.join(os.path.dirname(path),new_name)
+                os.rename(path, repo_path)
+                client.cli.add(repo_path)
+                client.cli.commit(m='rename %s %s' % (path, repo_path))
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -204,15 +204,18 @@ class Modify_File(BaseHandler):
             path = request.POST.get('path')
             branch = request.POST.get('branch')
             content = request.POST.get('file_content')
-            logger.info("Rename_File: %s %s %s %s %s" % (self.repo,dir_name,path,branch,content))
+            #print(request.POST)
+            #print(branch)
+            _type = request.POST.get('type')
+            logger.info("Modify_File: %s %s %s %s %s" % (self.repo,dir_name,path,branch,_type))
             if '0' == request.POST.get('type'):
+                client = git_client.GitServer(self.repo)
+                client.cli.checkout(branch)
                 with open(dir_name,'w+') as md:
                     md.write(content)
-                client = git_client.GitServer(self.repo)
-                client.cli.checkout(self.branch)
+
                 client.cli.add(dir_name)
                 client.cli.commit(m='modify %s' % dir_name)
-                repo = git.Repo(self.repo)
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -221,11 +224,14 @@ class Modify_File(BaseHandler):
                     }
                 }
             if '1' == request.POST.get('type'):
-                with open(dir_name,'w+') as md:
-                    md.write(content)
                 client = git_client.GitServer(self.repo)
                 client.cli.checkout(self.branch)
-                repo = git.Repo(self.repo)
+                with open(dir_name,'w+') as md:
+                    md.write(content)
+
+                client.cli.add(dir_name)
+                client.cli.commit(m='modify %s' % dir_name)
+
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -235,6 +241,7 @@ class Modify_File(BaseHandler):
                 }
             return self.write_json(result)
         except BaseException:
+            logger.info("Modify_File: 内容无更改")
             return self.write_json({'errno':1,'msg':'内容无更改'})
 
 

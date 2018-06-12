@@ -15,4 +15,3 @@ class BaseHandler(View):
         des = des_encryption.DESEncryp()
         key = path.encode('utf-8')
         return des.encrypt(key).decode()
-        
