@@ -299,21 +299,21 @@ class Modify_Discuss_File(BaseHandler):
     @auth_decorator
     def post(self,request):
         try:
+            logger.info(request.POST.get('new_name')) 
             new_name = request.POST.get('new_name')
             path = request.POST.get('path')
             branch = request.POST.get('branch', 'master')
             content = request.POST.get('file_content')
-            logger.info("Modify Discuss File File: %s %s %s %s %s" %
-                        (self.repo,self.branch,merge_branch))
+            logger.info("Modify Discuss File File: %s %s" %
+                        (self.repo,self.branch))
             repo_path = os.path.join(self.repo,new_name)
             os.rename(path,repo_path)
-            with open(repo_path,'w+') as md:
-                md.write(content)
-
             client = git_client.GitServer(self.repo)
+            client.cli.checkout(self.branch)
+            with open(repo_path,'w+') as md:
+               md.write(content)
             client.cli.add(repo_path)
             client.cli.commit(m='modify %s' % repo_path)
-            client.cli.checkout(self.branch)
             result = {
                 'errno': '0',
                 'msg': 'success',
