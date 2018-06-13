@@ -268,19 +268,18 @@ class Commit_File(BaseHandler):
 class Recover_File(BaseHandler):
     @auth_decorator
     def post(self,request):
-    #    try:
+        try:
             path = request.POST.get('path')
             count = request.POST.get('count')
-            print(count)
             client = git_client.GitServer(self.repo)
             client.cli.checkout(self.branch)
             repo = git.Repo(self.repo)
             logger.info("Recover File: %s %s %s %s" % (self.repo,self.branch,path,count))
             commit_id = repo.git.log(path,skip=count,n=1,format='%H')
             repo.git.checkout(commit_id,path)
-    #        client.cli.add(path)
-    #        client.cli.commit(m='recover file : %s '%(path))
-    #        repo.head.reset(commit_id, index=True, working_tree=True)
+            client.cli.add(path)
+            client.cli.commit(m='recover file : %s '%(path))
+            #repo.head.reset(commit_id, index=True, working_tree=True)
             content = ''
             with open(path) as fp:
                 for line in fp:
@@ -291,8 +290,8 @@ class Recover_File(BaseHandler):
                 'content':content,
             }
             return self.write_json(result)
-    #    except BaseException:
-    #        return self.write_json({'errno':1,'msg':'内容无更改！！！'})
+        except BaseException:
+            return self.write_json({'errno':1,'msg':'完成'})
 
 
 class Modify_Discuss_File(BaseHandler):
@@ -376,7 +375,7 @@ class File_Diff(BaseHandler):
                     client = git_client.GitServer(self.repo)
                     client.cli.checkout(self.branch)
                     repo = git.Repo(self.repo)
-                    s = repo.git.log('-p','^'+'master' ,assi_branch),
+                    s = repo.git.diff('-p','^'+'master' ,assi_branch),
                     return self.write_json({'errno': '0', 'msg': 'success','data':s})
                 if settings.GIT_ROLE_BRANCH_TYPE == request.POST.get('role'):
                     logger.debug("BRANCHE")
@@ -386,11 +385,12 @@ class File_Diff(BaseHandler):
                     s = repo.git.log('-p','^'+assi_branch,'master')
                     return self.write_json({'errno': '0', 'msg': 'success','data':s})
 
-                if '2' == request.POST.get('role'):
+                if settings.GIT_BRANCH_MR == request.POST.get('role'):
                     client = git_client.GitServer(self.repo)
                     client.cli.checkout(assi_branch)
                     repo = git.Repo(self.repo)
-                    s = repo.git.log('-p',assi_branch ,'^'+'master'),
+                    #s = repo.git.log('-p',assi_branch ,'^'+'master'),
+                    s = repo.git.diff('-p',assi_branch ,'^'+'master'), # 协作分支提交合并
                     return self.write_json({'errno': '0', 'msg': 'success','data':s})
 
             if '2' == request.POST.get('type'):
