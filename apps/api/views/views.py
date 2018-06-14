@@ -99,7 +99,6 @@ class Delete_File(BaseHandler):
 
 class Rename_Repo(BaseHandler):
     def post(self, request):
-        print(request.POST)
         dir_name = request.POST.get('dirname')
         new_dir_name = request.POST.get('new_dirname')
         branch = request.POST.get('branch', 'master')
@@ -133,8 +132,17 @@ class Rename_File(BaseHandler):
                     (self.repo,_type,old_name,new_name,path,folder_dir,branch))
         if 'folder_dir' in request.POST:
             if '0' == _type:
-                repo_path = os.path.join(self.repo,new_name)
+                client = git_client.GitServer(self.repo)
+                client.cli.checkout(self.branch)
+                repo_path = os.path.join(os.path.dirname(path), new_name)
+                logger.info("Rename %s %s %s" % (_type, path, repo_path))
                 os.rename(path,repo_path)
+                try:
+                    client.cli.add(".")
+                    client.cli.commit(m='Rename %s => %s' % (path,repo_path))
+                except:
+                    pass
+
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -183,7 +191,7 @@ class Rename_File(BaseHandler):
                 repo_path = os.path.join(os.path.dirname(path),new_name)
                 os.rename(path, repo_path)
                 client.cli.add(repo_path)
-                client.cli.commit(m='rename %s %s' % (path, repo_path))
+                client.cli.commit(m='rename  %s %s' % (path, repo_path))
                 result = {
                     'errno': '0',
                     'msg': 'success',
@@ -271,6 +279,7 @@ class Recover_File(BaseHandler):
         try:
             path = request.POST.get('path')
             count = request.POST.get('count')
+            print(count)
             client = git_client.GitServer(self.repo)
             client.cli.checkout(self.branch)
             repo = git.Repo(self.repo)
